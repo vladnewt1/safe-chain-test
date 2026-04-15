@@ -1,80 +1,45 @@
-# SafeChain
+# SafeChain 🛡️
 
-Простий запуск проєкту.
+SafeChain — це децентралізований шар репутації (Reputation Layer) для гаманців Solana.
+Проєкт дозволяє користувачам залишати відгуки на будь-які адреси та формує "Рейтинг довіри" (Trust Score) від 0 до 100.
 
-## Що потрібно заздалегідь
+## Основні фічі
 
-- Windows
-- Node.js 18+
-- Solana CLI
-- Anchor CLI
-- Phantom 
+- **Повністю On-Chain:** Усі відгуки та рейтинги зберігаються в блокчейні Solana (зараз у Devnet).
+- **Gasless/Спонсорські транзакції:** Користувачам не потрібно платити власні SOL за комісію мережі, щоб залишити відгук.
+- **Захист від спаму:** Технічні обмеження на часті відгуки (cooldown), а також неможливість залишити 2 відгуки на одну адресу.
 
-Перевірка:
+## Стек технологій
 
-- `node -v`
-- `solana --version`
-- `anchor --version`
+- Фронтенд: **React + Vite** (працює без бекенду, напряму з блокчейном).
+- Смарт-контракт: **Rust + Anchor** (знаходиться в папці programs/safechain).
 
 ---
 
-## Швидкий запуск (рекомендовано)
+## 🚀 Як запустити у себе
 
-У корені проєкту:
+Тут більше немає глобальних баз даних чи локальних валідаторів. Проєкт просто працює з блокчейном:
 
-1. `npm install`
-2. `npm run dev:box`
+1. Відкрийте термінал і перейдіть у папку фронтенду:
 
-Після запуску:
+   `ash
+   cd app/frontend
+   ``n
+2. Встановіть залежності (якщо ще не встановлені):
 
-- Frontend: http://localhost:5173
-- Backend: http://localhost:8080
-- Localnet RPC: http://127.0.0.1:8899
+   `ash
+   npm install
+   ``n
+3. Запустіть локальний сервер:
 
----
+   `ash
+   npm run dev
+   ``n
+4. Відкрийте посилання **http://localhost:5173** у браузері.
+5. Увімкніть **Solana Devnet** у налаштуваннях вашого гаманця Phantom.
 
-## Якщо хочеш запускати вручну
-
-### 1) Встановити залежності
-
-- У корені: `npm install`
-- Frontend: `npm --prefix app/frontend install`
-- Backend: `npm --prefix backend install`
-
-### 2) Зібрати програму
-
-- `anchor build --no-idl`
-
-### 3) Запустити local validator
-
-- `solana-test-validator --ledger ./test-ledger -r`
-
-### 4) Задеплоїти програму
-
-- `solana program deploy target/deploy/safechain.so --program-id target/deploy/safechain-keypair.json --url http://127.0.0.1:8899`
-
-### 5) Запустити backend
-
-- `npm --prefix backend run dev`
-
-### 6) Запустити frontend
-
-- `npm --prefix app/frontend run dev`
+Готово! Можна підключати гаманець і тестувати.
 
 ---
 
-## Корисні команди
-
-- Зробити backup ключа програми:
-  - `npm run backup:critical`
-
-- Очистити важкі папки (target/test-ledger/node_modules/dist):
-  - `npm run clean:heavy`
-
-- Запустити все однією командою після очистки:
-  - `npm run dev:box`
-
----
-
-
-
+*Розроблено для хакатону Solana.*
