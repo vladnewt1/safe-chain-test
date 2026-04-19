@@ -181,7 +181,7 @@ function Card({ title, children, className = "" }: { title: string; children: Re
 }
 
 export default function App() {
-  const [lang, setLang] = useState<"en" | "uk">("uk");
+  const [lang, setLang] = useState<"en" | "uk">("en");
   const t = DICT[lang];
 
   const getRiskMeta = (score: number | null) => {
@@ -203,7 +203,7 @@ export default function App() {
   const [comment, setComment] = useState("");
   const [targetUser, setTargetUser] = useState<UserView | null>(null);
   const [reviews, setReviews] = useState<ReviewView[]>([]);
-  const [status, setStatus] = useState<string | null>(null);
+  const [statusGetter, setStatusGetter] = useState<((t: any) => string) | null>(null);
   const [statusType, setStatusType] = useState<"info" | "success" | "error">("info");
   const [chainStats, setChainStats] = useState<any>(null);
   const [isChecking, setIsChecking] = useState(false);
@@ -216,29 +216,29 @@ export default function App() {
   const balanceChartRef = useRef<HTMLDivElement | null>(null);
   const balanceSvgRef = useRef<SVGSVGElement | null>(null);
 
-  const displayStatus = status || t.statusInit;
+  const displayStatus = statusGetter ? statusGetter(t) : t.statusInit;
 
-  const setInfo = (msg: string) => { setStatusType("info"); setStatus(msg); };
-  const setSuccess = (msg: string) => { setStatusType("success"); setStatus(msg); };
-  const setError = (msg: string) => { setStatusType("error"); setStatus(msg); };
+  const setInfo = (fn: (t: any) => string) => { setStatusType("info"); setStatusGetter(() => fn); };
+  const setSuccess = (fn: (t: any) => string) => { setStatusType("success"); setStatusGetter(() => fn); };
+  const setError = (fn: (t: any) => string) => { setStatusType("error"); setStatusGetter(() => fn); };
 
   const parseError = (error: unknown) => {
     const text = `${error ?? ""}`;
-    if (text.includes("rejected")) return t.msgTxRejected;
-    if (text.includes("WalletSignTransactionError") || text.includes("Unexpected error")) return t.msgWalletSignRefused;
+    if (text.includes("rejected")) return (t: any) => t.msgTxRejected;
+    if (text.includes("WalletSignTransactionError") || text.includes("Unexpected error")) return (t: any) => t.msgWalletSignRefused;
     if (
       text.includes("Attempt to debit an account") ||
       text.includes("no record of a prior credit") ||
       text.includes("insufficient funds")
-    ) return t.msgNoSol;
-    if (text.includes("CooldownNotPassed")) return t.msgCooldown;
-    if (text.includes("already exists")) return t.msgAlreadyReviewed;
-    return t.msgSubmitFailed;
+    ) return (t: any) => t.msgNoSol;
+    if (text.includes("CooldownNotPassed")) return (t: any) => t.msgCooldown;
+    if (text.includes("already exists")) return (t: any) => t.msgAlreadyReviewed;
+    return (t: any) => t.msgSubmitFailed;
   };
 
   const loadTarget = async () => {
-    if (!provider) { setError(t.msgConnectWallet); return; }
-    setIsChecking(true); setInfo(t.btnChecking);
+    if (!provider) { setError(t => t.msgConnectWallet); return; }
+    setIsChecking(true); setInfo(t => t.btnChecking);
     try {
       const targetPubkey = new PublicKey(target);
       const program = getProgram(provider) as any;
@@ -370,18 +370,18 @@ export default function App() {
 
       setReviews(reviewAccounts.map((r: any) => ({ reviewer: r.account.reviewer.toBase58(), rating: r.account.rating, comment: r.account.comment, timestamp: Number(r.account.timestamp) })).sort((a: ReviewView, b: ReviewView) => b.timestamp - a.timestamp));
 
-      setSuccess(user ? t.msgLoadedProfile : t.msgLoadedBaseline);
+      setSuccess(t => user ? t.msgLoadedProfile : t.msgLoadedBaseline);
     } catch (e) {
       console.error(e);
-      setError(t.msgInvalidAddress); setTargetUser(null); setReviews([]); setChainStats(null); setTxHistory([]); setBalanceSeries([]);
+      setError(t => t.msgInvalidAddress); setTargetUser(null); setReviews([]); setChainStats(null); setTxHistory([]); setBalanceSeries([]);
     } finally { setIsChecking(false); }
   };
 
   const submitReview = async () => {
-    if (!provider || !wallet.publicKey) { setError(t.errConnect); return; }
-    if (!target.trim()) { setError(t.errTarget); return; }
-    if (!comment.trim()) { setError(t.errComment); return; }
-    setIsSubmitting(true); setInfo(`${t.btnSubmitting} ${t.msgConfirmWallet}`);
+    if (!provider || !wallet.publicKey) { setError(t => t.errConnect); return; }
+    if (!target.trim()) { setError(t => t.errTarget); return; }
+    if (!comment.trim()) { setError(t => t.errComment); return; }
+    setIsSubmitting(true); setInfo(t => `${t.btnSubmitting} ${t.msgConfirmWallet}`);
 
     try {
       const targetPubkey = new PublicKey(target);
@@ -450,7 +450,7 @@ export default function App() {
       }, "confirmed");
 
       setComment(""); setReviewTone("safe"); 
-      setSuccess(`✅ ${t.msgReviewCreated} ${sig.slice(0, 8)}...${sig.slice(-8)}`);
+      setSuccess(t => `✅ ${t.msgReviewCreated} ${sig.slice(0, 8)}...${sig.slice(-8)}`);
       await loadTarget();
     } catch (error) {
       console.error(error);
@@ -538,11 +538,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-              <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[#3260F3] to-[#25BDDF] flex items-center justify-center shadow-lg shadow-[#3260F3]/30">
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
+              <img src="/logo.png" alt="SafeChain Logo" className="w-10 h-10 rounded-[10px]" />
               {t.brand}
             </h1>
             <span className="hidden md:inline-flex items-center rounded-lg bg-white/[0.05] border border-white/[0.05] px-3 py-1 text-xs font-semibold text-[#727B88]">{t.tagline}</span>
@@ -612,7 +608,7 @@ export default function App() {
                   onChange={(e) => {
                     setTarget(e.target.value);
                     setShowProfile(false);
-                    setStatus(null); // Reset status when typing
+                    setStatusGetter(null); // Reset status when typing
                     setStatusType("info");
                   }}
                 />
